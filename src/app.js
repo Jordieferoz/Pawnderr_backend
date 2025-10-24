@@ -1,25 +1,22 @@
-import express from "express";
-import cors from "cors";
-import helmet from "helmet";
-import morgan from "morgan";
-import userRoutes from "./routes/user.routes.js";
-import { errorHandler } from "./middlewares/errorHandler.js";
+// src/app.js
+import express from 'express';
+import http from 'http';
+import cors from 'cors';
+import dotenv from 'dotenv';
+dotenv.config();
+
+import authRoutes from './auth/auth.controller.js';
 
 const app = express();
-
-// Core middlewares
-app.use(express.json());
 app.use(cors());
-app.use(helmet());
-app.use(morgan("combined"));
+app.use(express.json());
 
-// Routes
-app.use("/api/users", userRoutes);
+// routes
+app.use('/auth', authRoutes);
 
-// Health check
-app.get("/health", (req, res) => res.status(200).send("API is healthy"));
 
-// Error handler
-app.use(errorHandler);
+// health
+app.get('/health', (req, res) => res.json({ ok: true }));
 
-export default app;
+const port = process.env.PORT || 3000;
+app.listen(port, () => console.log(`Pawnderr backend listening on ${port}`));
