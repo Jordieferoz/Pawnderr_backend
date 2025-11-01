@@ -3,6 +3,7 @@ import express from 'express';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import { varOcg } from '../db.js';
+import { sendOtpViaSms, sendOtpViaEmail, verifyOtp } from '../services/otp.service.js';
 
 const router = express.Router();
 
@@ -18,7 +19,14 @@ router.post('/register', async (req, res) => {
     );
     const userId = rows[0].id;
 
-    res.status(201).json({ message: 'Registered.', userId });
+    // Send OTP via SMS if phone provided, otherwise via email
+    if (phone) {
+      await sendOtpViaSms(phone, userId);
+    } else {
+      await sendOtpViaEmail(email, userId);
+    }
+
+    res.status(201).json({ message: 'Registered. OTP sent.', userId });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Registration error' });
@@ -30,15 +38,11 @@ router.post('/verify-otp', async (req, res) => {
   const { userId, otp } = req.body;
   if (!userId || !otp) return res.status(400).json({ error: 'userId & otp required' });
   try {
-    const hashed = hashOtp(otp);
-    const { rows } = await varOcg.query(
-      `SELECT * FROM user_otps WHERE user_id=$1 AND otp_code=$2 AND verified=false AND expires_at>NOW()`,
-      [userId, hashed]
-    );
-    if (!rows.length) return res.status(400).json({ error: 'Invalid/expired OTP' });
-    await varOcg.query(`UPDATE user_otps SET verified=true WHERE id=$1`, [rows[0].id]);
-    await varOcg.query(`UPDATE users SET email_verified=true WHERE id=$1`, [userId]);
-    res.json({ message: 'OTP verified' });
+    const result = await verifyOtp(userId, otp);
+    if (!result.success) {
+      return res.status(400).json({ error: result.message });
+    }
+    res.json({ message: result.message });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'OTP verification error' });
