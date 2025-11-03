@@ -20,5 +20,8 @@ app.use('/dogs', dogsRoutes);
 // health
 app.get('/health', (req, res) => res.json({ ok: true }));
 
-const port = process.env.PORT || 3000;
+// error handler middleware (must be last)
+app.use(errorHandler);
+
+const port = process.env.PORT || 8000;
 app.listen(port, () => console.log(`Pawnderr backend listening on ${port}`));
