@@ -6,6 +6,7 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 import authRoutes from './auth/auth.controller.js';
+import dogsRoutes from './dogs/dogs.routes.js';
 
 const app = express();
 app.use(cors());
@@ -13,6 +14,7 @@ app.use(express.json());
 
 // routes
 app.use('/auth', authRoutes);
+app.use('/dogs', dogsRoutes);
 
 
 // health
